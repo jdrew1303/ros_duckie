@@ -32,4 +32,4 @@ RUN /bin/bash -c "source /home/ros_bot/docker_setup.sh"
 WORKDIR /home/ros_bot
 
 RUN ["chmod", "a+x", "./run_all_nodes.sh"]
-CMD ["bash ./run_all_nodes.sh" ]
+CMD ["./run_all_nodes.sh" ]
