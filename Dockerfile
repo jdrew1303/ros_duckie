@@ -31,4 +31,5 @@ RUN /bin/bash -c "source /home/ros_bot/docker_setup.sh"
 
 WORKDIR /home/ros_bot
 
-CMD ["sudo bash ./run_all_nodes.sh" ]
+RUN ["chmod", "a+x", "./run_all_nodes.sh"]
+CMD ["bash ./run_all_nodes.sh" ]
