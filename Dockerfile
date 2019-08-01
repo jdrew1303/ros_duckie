@@ -27,8 +27,8 @@ ENV ROS_LANG_DISABLE=gennodejs:geneus:genlisp
 RUN /bin/bash -c "cd /home/ros_bot/ && source /opt/ros/kinetic/setup.bash && catkin_make -j"
 
 RUN echo "source /home/ros_bot/docker_setup.sh" >> ~/.bashrc
-RUN bash -c "source /home/ros_bot/docker_setup.sh"
+RUN /bin/bash -c "source /home/ros_bot/docker_setup.sh"
 
 WORKDIR /home/ros_bot
 
-CMD [ "./run_all_nodes.sh" ]
+CMD ["sudo bash ./run_all_nodes.sh" ]
