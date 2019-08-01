@@ -8,10 +8,6 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 ENV ROS_DISTRO kinetic
 
-COPY ./qemu/bin/ /usr/bin/
-
-RUN [ "cross-build-start" ]
-
 # setup keys
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116
 
@@ -24,11 +20,6 @@ RUN apt-get update && apt-get install -y \
     python-pip \
     python-smbus
 
-# RPi libs
-ADD qemu/vc.tgz /opt/
-COPY qemu/00-vmcs.conf /etc/ld.so.conf.d
-RUN ldconfig
-
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
 
@@ -37,8 +28,6 @@ RUN /bin/bash -c "cd /home/ros_bot/ && source /opt/ros/kinetic/setup.bash && cat
 
 RUN echo "source /home/ros_bot/docker_setup.sh" >> ~/.bashrc
 RUN bash -c "source /home/ros_bot/docker_setup.sh"
-
-RUN [ "cross-build-end" ]
 
 WORKDIR /home/ros_bot
 
