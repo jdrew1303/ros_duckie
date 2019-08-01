@@ -29,17 +29,11 @@ ADD qemu/vc.tgz /opt/
 COPY qemu/00-vmcs.conf /etc/ld.so.conf.d
 RUN ldconfig
 
-
-# COPY requirements.txt /requirements.txt
-
-# ENV READTHEDOCS False
-# RUN pip install -r /requirements.txt
-
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
 
 ENV ROS_LANG_DISABLE=gennodejs:geneus:genlisp
-RUN /bin/bash -c "cd /home/ros_bot/ && source /opt/ros/kinetic/setup.bash && catkin_make -j -C catkin_ws/"
+RUN /bin/bash -c "cd /home/ros_bot/ && source /opt/ros/kinetic/setup.bash && catkin_make -j -C"
 
 RUN echo "source /home/ros_bot/docker_setup.sh" >> ~/.bashrc
 RUN bash -c "source /home/ros_bot/docker_setup.sh"

@@ -5,15 +5,16 @@ branch=$(shell git rev-parse --abbrev-ref HEAD)
 # name of the repo
 repo=$(shell basename -s .git `git config --get remote.origin.url`)
 
-tag=duckietown/$(repo):$(branch)
+tag=jdrew1303/$(repo):$(branch)
 
-labels=$(shell ./labels.py)
+# labels=$(shell ./labels.py)
 
 build:
-	docker build $(labels) -t $(tag) .
+	# docker build $(labels) -t $(tag) .
+	docker build -t $(tag) .
 
 push:
 	docker push $(tag)
 
 build-no-cache:
-	docker build $(labels) --no-cache -t $(tag) .
+	docker build --no-cache -t $(tag) .

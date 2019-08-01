@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 MY_IP=$(hostname -I | cut -d " " -f 1)
 export ROS_IP=${MY_IP}
@@ -16,5 +16,3 @@ fi
 
 export DUCKIEFLEET_ROOT=/data/config
 export VEHICLE_NAME=$HOSTNAME
-
-

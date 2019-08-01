@@ -2,9 +2,9 @@
 
 set -e -x
 
-source /home/duckiebot-interface/docker_setup.sh
+source /home/ros_bot/docker_setup.sh
 
-source /home/duckiebot-interface/catkin_ws/devel/setup.bash
+source /home/ros_bot/devel/setup.bash
 
 roscore &
 
