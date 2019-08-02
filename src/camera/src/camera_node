@@ -24,7 +24,7 @@ CAMERA_CAPTURE = CAMERA.capture_continuous(IO_STREAM,'jpeg',use_video_port=True)
 # also need to be evaluated and you no longer have control of the camera led.
 
 def publish_image_to_topic(timer_event):
-        CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
+        CAMERA_NODE_PUBLISHER = rospy.Publisher("~image", CompressedImage, queue_size=1)
         # fetch the current image from the camera
         CAMERA_CAPTURE.next()
         IO_STREAM.seek(0)
@@ -48,7 +48,7 @@ def cleanup_on_shutdown():
 
 if __name__ == '__main__':
     # this is the business end of the node
-    rospy.init_node('raspberry_pi_camera_node', anonymous=False)
+    rospy.init_node('camera', anonymous=False)
     rospy.on_shutdown(cleanup_on_shutdown)
     FPS_TO_CAPTURE = rospy.Duration.from_sec(1.0/CAMERA_FRAMERATE)
     MAIN_CAMERA_LOOP = rospy.Timer(FPS_TO_CAPTURE, publish_image_to_topic)
