@@ -10,6 +10,4 @@ source devel/setup.sh
 
 roscore &
 sleep 5
-rosrun camera camera_node &
-sleep 5
-rostopic list
+rosrun camera camera_node
