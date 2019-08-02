@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 import rospy
 
 from geometry_msgs.msg import Twist
@@ -69,4 +70,11 @@ if __name__ == '__main__':
     rospy.init_node('differential_drive', anonymous=False)
     rospy.on_shutdown(turn_off_motors)
     rospy.Subscriber('move', Twist, velocity_received)
+
+    # run a quick test
+    telemetry = [(0, -.5), (0, -.5), (0, 0), (0, .5), (0, .5), (0, 0), ]
+    for t in telemetry:
+        move(*t)
+        time.sleep(seconds)
+
     rospy.spin()
