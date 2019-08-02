@@ -26,9 +26,10 @@ CAMERA_CAPTURE = CAMERA.capture_continuous(IO_STREAM, 'jpeg', use_video_port=Tru
 # dispatch at 30+ frames per second. This is on the todo list. Performance will 
 # also need to be evaluated and you no longer have control of the camera led.
 
-CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
-
 def publish_image_to_topic(event):
+    
+    CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
+    
     while not rospy.is_shutdown():
         # fetch the current image from the camera
         CAMERA_CAPTURE.next()
