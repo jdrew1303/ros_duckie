@@ -1,2 +1,2 @@
 picamera
-adafruit-circuitpython-motorkit
+Adafruit_MotorHat

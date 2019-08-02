@@ -3,21 +3,70 @@
 import rospy
 
 from geometry_msgs.msg import Twist
-from adafruit_motorkit import MotorKit
+from Adafruit_MotorHAT import Adafruit_MotorHAT
 
-MOTORS = MotorKit()
-LEFT_MOTOR = MOTORS.motor1
-RIGHT_MOTOR = MOTORS.motor2
+MOTORHAT = Adafruit_MotorHAT(addr=0x60)
+LEFT_MOTOR = MOTORHAT.getMotor(1)
+RIGHT_MOTOR = MOTORHAT.getMotor(2)
+
+LEFT_MOTOR_SPEED = 0
+RIGHT_MOTOR_SPEED = 0
+
+RELEASE = Adafruit_MotorHAT.RELEASE
+FORWARD = Adafruit_MotorHAT.FORWARD
+BACKWARD = Adafruit_MotorHAT.BACKWARD
+
+def map_range(x, x_min, x_max, y_min, y_max):
+    x_range = x_max - x_min
+    y_range = y_max - y_min
+    XY_ratio = x_range/y_range
+    y = ((x-x_min) / XY_ratio + y_min) // 1
+    return y
 
 
-def publish_image_to_topic(timer_event):
+def turn_off_motors():
+    LEFT_MOTOR.run(RELEASE)
+    LEFT_MOTOR_SPEED = 0
+    RIGHT_MOTOR.run(RELEASE)
+    RIGHT_MOTOR_SPEED = 0
+
+
+def set_motor_speed(motor, speed):
+    if speed > 1 or speed < -1:
+            raise ValueError("motor speed must be between 1(forward) and -1(reverse)")
+    throttle_value = int(map_range(abs(speed), -1, 1, -255, 255))
+    if speed > 0: 
+        motor.run(FORWARD)
+    else: 
+        motor.run(BACKWARD)
+    motor.setSpeed(throttle_value)
+
+
+def move(linear, angular):
+    if linear == 0 and angle == 0:
+        turn_off_motors()
+
+    left_speed = ((LEFT_MOTOR_SPEED + linear) / 3 - angular / 5)
+    right_speed = ((RIGHT_MOTOR_SPEED + linear) / 3 + angular / 5)
+    left_speed = min(max(left_speed, -1), 1)
+    right_speed = min(max(right_speed, -1), 1)
+    set_motor_speed(LEFT_MOTOR, left_speed)
+    LEFT_MOTOR_SPEED = left_speed
+    set_motor_speed(RIGHT_MOTOR, right_speed)
+    RIGHT_MOTOR_SPEED = right_speed
+
+
+def velocity_recieved(message):
+    # extract values needed from twist2d message
+    linear = message.linear.x
+    angular = message.angular.z
+    move(linear, angular)
 
 
 
 if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('differential_drive', anonymous=False)
-    LEFT_MOTOR.throttle = 1
-#     FPS_TO_CAPTURE = rospy.Duration.from_sec(1.0/CAMERA_FRAMERATE)
-#     MAIN_CAMERA_LOOP = rospy.Timer(FPS_TO_CAPTURE, publish_image_to_topic)
+    rospy.on_shutdown(turn_off_motors)
+    rospy.Subscriber('move', Twist, velocity_received)
     rospy.spin()
