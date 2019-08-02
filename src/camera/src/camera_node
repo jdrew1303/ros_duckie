@@ -15,8 +15,6 @@ CAMERA = PiCamera(0, 'none', False, CAMERA_RESOLUTION, CAMERA_FRAMERATE, 0, None
 
 IO_STREAM = io.BytesIO()
 
-CAMERA_CAPTURE = CAMERA.capture_continuous(IO_STREAM, 'jpeg', use_video_port=True)
-
 # TODO possibly move this to the main and pass in. didnt want to use lambdas in 
 # python (Im not really sure how they behave). It may also be possible to use 
 # cv2.VideoCapture directly like so:
@@ -26,10 +24,7 @@ CAMERA_CAPTURE = CAMERA.capture_continuous(IO_STREAM, 'jpeg', use_video_port=Tru
 # dispatch at 30+ frames per second. This is on the todo list. Performance will 
 # also need to be evaluated and you no longer have control of the camera led.
 
-def publish_image_to_topic(event):
-    
-    CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
-    
+def publish_image_to_topic(publisher):
     while not rospy.is_shutdown():
         # fetch the current image from the camera
         CAMERA_CAPTURE.next()
@@ -43,7 +38,7 @@ def publish_image_to_topic(event):
         message.header.stamp = rospy.Time.now()
             
         # publish new image to the topic
-        CAMERA_NODE_PUBLISHER.publish(message)
+        publisher.publish(message)
             
         # clear out the current image
         IO_STREAM.seek(0)
@@ -56,5 +51,6 @@ if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('raspberry_pi_camera_node', anonymous=False)
     rospy.on_shutdown(cleanup_on_shutdown)
-    IMAGE_CAPTURE_THREAD = thread.start_new_thread(publish_image_to_topic)
+    CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
+    IMAGE_CAPTURE_THREAD = thread.start_new_thread(publish_image_to_topic, (CAMERA_NODE_PUBLISHER))
     rospy.spin()
