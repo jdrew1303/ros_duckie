@@ -23,6 +23,9 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
 
+ENV READTHEDOCS True
+RUN pip install -r /home/ros_bot/requirements.txt
+
 ENV ROS_LANG_DISABLE=gennodejs:geneus:genlisp
 RUN /bin/bash -c "cd /home/ros_bot/ && source /opt/ros/kinetic/setup.bash && catkin_make -j"
 
@@ -30,6 +33,8 @@ RUN echo "source /home/ros_bot/docker_setup.sh" >> ~/.bashrc
 RUN /bin/bash -c "source /home/ros_bot/docker_setup.sh"
 
 WORKDIR /home/ros_bot
+
+ENV LD_LIBRARY_PATH /opt/vc/lib
 
 RUN ["chmod", "a+x", "./run_all_nodes.sh"]
 CMD ["./run_all_nodes.sh" ]
