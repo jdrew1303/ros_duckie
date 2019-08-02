@@ -2,7 +2,6 @@
 
 import rospy
 import io
-import thread
 
 from sensor_msgs.msg import CompressedImage
 from picamera import PiCamera
@@ -24,8 +23,8 @@ CAMERA_CAPTURE = CAMERA.capture_continuous(IO_STREAM,'jpeg',use_video_port=True)
 # dispatch at 30+ frames per second. This is on the todo list. Performance will 
 # also need to be evaluated and you no longer have control of the camera led.
 
-def publish_image_to_topic(publisher):
-    while not rospy.is_shutdown():
+def publish_image_to_topic(timer_event):
+        CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
         # fetch the current image from the camera
         CAMERA_CAPTURE.next()
         IO_STREAM.seek(0)
@@ -38,7 +37,7 @@ def publish_image_to_topic(publisher):
         message.header.stamp = rospy.Time.now()
             
         # publish new image to the topic
-        publisher.publish(message)
+        CAMERA_NODE_PUBLISHER.publish(message)
             
         # clear out the current image
         IO_STREAM.seek(0)
@@ -51,6 +50,6 @@ if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('raspberry_pi_camera_node', anonymous=False)
     rospy.on_shutdown(cleanup_on_shutdown)
-    CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
-    IMAGE_CAPTURE_THREAD = thread.start_new_thread(publish_image_to_topic, (CAMERA_NODE_PUBLISHER,))
+    FPS_TO_CAPTURE = rospy.Duration.from_sec(1.0/CAMERA_FRAMERATE)
+    MAIN_CAMERA_LOOP = rospy.Timer(FPS_TO_CAPTURE, publish_image_to_topic)
     rospy.spin()
