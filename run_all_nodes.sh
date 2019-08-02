@@ -9,5 +9,10 @@ source /home/ros_bot/devel/setup.bash
 source devel/setup.sh
 
 roscore &
-sleep 5
-rosrun camera camera_node
+
+# give roscore a few seconds to startup
+sleep 10
+
+# start up our services in the background (easier than a launch file)
+rosrun camera camera_node &
+rosrun differential differential_drive_node

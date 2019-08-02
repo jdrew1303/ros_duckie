@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+import rospy
+
+from geometry_msgs.msg import Twist
+from adafruit_motorkit import MotorKit
+
+MOTORS = MotorKit()
+LEFT_MOTOR = MOTORS.motor1
+RIGHT_MOTOR = MOTORS.motor2
+
+
+def publish_image_to_topic(timer_event):
+
+
+
+if __name__ == '__main__':
+    # this is the business end of the node
+    rospy.init_node('differential_drive', anonymous=False)
+    LEFT_MOTOR.throttle = 1
+#     FPS_TO_CAPTURE = rospy.Duration.from_sec(1.0/CAMERA_FRAMERATE)
+#     MAIN_CAMERA_LOOP = rospy.Timer(FPS_TO_CAPTURE, publish_image_to_topic)
+    rospy.spin()
