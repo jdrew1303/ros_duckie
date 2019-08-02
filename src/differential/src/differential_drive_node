@@ -70,5 +70,5 @@ if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('drivetrain', anonymous=False)
     rospy.on_shutdown(turn_off_motors)
-    rospy.Subscriber('ackermann', AckermannDrive, command_recieved)
+    rospy.Subscriber('~ackermann', AckermannDrive, command_recieved)
     rospy.spin()
