@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import time
 import rospy
 
 from geometry_msgs.msg import Twist
@@ -26,6 +25,8 @@ def map_range(x, x_min, x_max, y_min, y_max):
 
 
 def turn_off_motors():
+    global LEFT_MOTOR_SPEED
+    global RIGHT_MOTOR_SPEED
     LEFT_MOTOR.run(RELEASE)
     LEFT_MOTOR_SPEED = 0
     RIGHT_MOTOR.run(RELEASE)
@@ -35,7 +36,7 @@ def turn_off_motors():
 def set_motor_speed(motor, speed):
     if speed > 1 or speed < -1:
             raise ValueError("motor speed must be between 1(forward) and -1(reverse)")
-    throttle_value = int(map_range(abs(speed), -1, 1, -255, 255))
+    throttle_value = int(map_range(abs(speed), -1.0, 1.0, -255.0, 255.0))
     if speed > 0: 
         motor.run(FORWARD)
     else: 
@@ -44,11 +45,13 @@ def set_motor_speed(motor, speed):
 
 
 def move(linear, angular):
-    if linear == 0 and angle == 0:
+    if linear == 0 and angular == 0:
         turn_off_motors()
 
-    left_speed = ((LEFT_MOTOR_SPEED + linear) / 3 - angular / 5)
-    right_speed = ((RIGHT_MOTOR_SPEED + linear) / 3 + angular / 5)
+    global LEFT_MOTOR_SPEED
+    global RIGHT_MOTOR_SPEED
+    left_speed = ((LEFT_MOTOR_SPEED + linear) / 3.0 - angular / 5.0)
+    right_speed = ((RIGHT_MOTOR_SPEED + linear) / 3.0 + angular / 5.0)
     left_speed = min(max(left_speed, -1), 1)
     right_speed = min(max(right_speed, -1), 1)
     set_motor_speed(LEFT_MOTOR, left_speed)
@@ -69,12 +72,5 @@ if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('differential_drive', anonymous=False)
     rospy.on_shutdown(turn_off_motors)
-    rospy.Subscriber('move', Twist, velocity_received)
-
-    # run a quick test
-    telemetry = [(0, -.5), (0, -.5), (0, 0), (0, .5), (0, .5), (0, 0), ]
-    for t in telemetry:
-        move(*t)
-        time.sleep(seconds)
-
+    rospy.Subscriber('move', Twist, velocity_recieved)
     rospy.spin()
