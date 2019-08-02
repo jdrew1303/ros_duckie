@@ -14,7 +14,7 @@ CAMERA_RESOLUTION = (CAMERA_WIDTH_IN_PIXELS, CAMERA_HEIGHT_IN_PIXELS)
 CAMERA = PiCamera(0, 'none', False, CAMERA_RESOLUTION, CAMERA_FRAMERATE, 0, None, 'reset', None)
 
 IO_STREAM = io.BytesIO()
-
+CAMERA_CAPTURE = CAMERA.capture_continuous(IO_STREAM,'jpeg',use_video_port=True)
 # TODO possibly move this to the main and pass in. didnt want to use lambdas in 
 # python (Im not really sure how they behave). It may also be possible to use 
 # cv2.VideoCapture directly like so:
@@ -52,5 +52,5 @@ if __name__ == '__main__':
     rospy.init_node('raspberry_pi_camera_node', anonymous=False)
     rospy.on_shutdown(cleanup_on_shutdown)
     CAMERA_NODE_PUBLISHER = rospy.Publisher("~image/compressed", CompressedImage, queue_size=1)
-    IMAGE_CAPTURE_THREAD = thread.start_new_thread(publish_image_to_topic, (CAMERA_NODE_PUBLISHER))
+    IMAGE_CAPTURE_THREAD = thread.start_new_thread(publish_image_to_topic, (CAMERA_NODE_PUBLISHER,))
     rospy.spin()
