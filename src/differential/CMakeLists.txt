@@ -3,7 +3,7 @@ project(differential)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
-  geometry_msgs
+  ackermann_msgs
 )
 
 catkin_python_setup()

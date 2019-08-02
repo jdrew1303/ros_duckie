@@ -2,7 +2,7 @@
 
 import rospy
 
-from geometry_msgs.msg import Twist
+from ackermann_msgs.msg import AckermannDrive
 from Adafruit_MotorHAT import Adafruit_MotorHAT
 
 MOTORHAT = Adafruit_MotorHAT(addr=0x60)
@@ -16,61 +16,59 @@ RELEASE = Adafruit_MotorHAT.RELEASE
 FORWARD = Adafruit_MotorHAT.FORWARD
 BACKWARD = Adafruit_MotorHAT.BACKWARD
 
-def map_range(x, x_min, x_max, y_min, y_max):
-    x_range = x_max - x_min
-    y_range = y_max - y_min
-    XY_ratio = x_range/y_range
-    y = ((x-x_min) / XY_ratio + y_min) // 1
-    return y
+ACKERMANN_CAR_LENGTH = 0.10
+ACKERMANN_AXLE_WIDTH = 0.06
+ACKERMAN_WHEEL_OFFSET = 0
+DIFFERENTIAL_LEFT_GAIN = 1
+DIFFERENTIAL_RIGHT_GAIN = 1
+DIFFERENTIAL_YAW_TRIM = 0
 
+ADAFRUIT_PULSE_SCALING = 255
 
 def turn_off_motors():
-    global LEFT_MOTOR_SPEED
-    global RIGHT_MOTOR_SPEED
     LEFT_MOTOR.run(RELEASE)
-    LEFT_MOTOR_SPEED = 0
     RIGHT_MOTOR.run(RELEASE)
-    RIGHT_MOTOR_SPEED = 0
-
 
 def set_motor_speed(motor, speed):
     if speed > 1 or speed < -1:
             raise ValueError("motor speed must be between 1(forward) and -1(reverse)")
-    throttle_value = int(map_range(abs(speed), -1.0, 1.0, -255.0, 255.0))
     if speed > 0: 
         motor.run(FORWARD)
     else: 
         motor.run(BACKWARD)
+    throttle_value = abs(int(speed * ADAFRUIT_PULSE_SCALING))
     motor.setSpeed(throttle_value)
 
+def move(left_speed, right_speed):
+    set_motor_speed(LEFT_MOTOR, left_speed)
+    set_motor_speed(RIGHT_MOTOR, right_speed)
 
-def move(linear, angular):
-    if linear == 0 and angular == 0:
-        turn_off_motors()
+def ackermann_to_differential(throttle, steering_angle):
+    throttle = min(1, max(-1, throttle))
+    if abs(steering_angle) < 1E-4:
+        left_speed = throttle
+        right_speed = throttle
+    else:
+        angle_radians = math.radians(steering_angle)
+        steer_tan = math.tan(angle_radians)
+        r = ACKERMANN_CAR_LENGTH / steer_tan
+        left_speed = throttle * (1.0 - (ACKERMANN_AXLE_WIDTH * 0.5 - ACKERMAN_WHEEL_OFFSET)/r ) * DIFFERENTIAL_LEFT_GAIN + DIFFERENTIAL_YAW_TRIM
+        right_speed = throttle * (1.0 + (ACKERMANN_AXLE_WIDTH * 0.5 + ACKERMAN_WHEEL_OFFSET)/r ) * DIFFERENTIAL_RIGHT_GAIN - DIFFERENTIAL_YAW_TRIM
 
-    global LEFT_MOTOR_SPEED
-    global RIGHT_MOTOR_SPEED
-    left_speed = ((LEFT_MOTOR_SPEED + linear) / 3.0 - angular / 5.0)
-    right_speed = ((RIGHT_MOTOR_SPEED + linear) / 3.0 + angular / 5.0)
     left_speed = min(max(left_speed, -1), 1)
     right_speed = min(max(right_speed, -1), 1)
-    set_motor_speed(LEFT_MOTOR, left_speed)
-    LEFT_MOTOR_SPEED = left_speed
-    set_motor_speed(RIGHT_MOTOR, right_speed)
-    RIGHT_MOTOR_SPEED = right_speed
+    return (left_speed, right_speed,)
 
 
-def velocity_recieved(message):
-    # extract values needed from twist2d message
-    linear = message.linear.x
-    angular = message.angular.z
-    move(linear, angular)
-
-
+def command_recieved(message):
+    speed = message.speed
+    steering_angle = message.steering_angle
+    (left_speed, right_speed) = ackermann_to_differential(speed, steering_angle)
+    move(left_speed, right_speed)
 
 if __name__ == '__main__':
     # this is the business end of the node
-    rospy.init_node('differential_drive', anonymous=False)
+    rospy.init_node('drivetrain', anonymous=False)
     rospy.on_shutdown(turn_off_motors)
-    rospy.Subscriber('move', Twist, velocity_recieved)
+    rospy.Subscriber('ackermann', AckermannDrive, command_recieved)
     rospy.spin()
