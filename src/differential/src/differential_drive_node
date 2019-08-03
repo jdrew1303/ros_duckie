@@ -28,8 +28,8 @@ def turn_off_motors():
     RIGHT_MOTOR.run(RELEASE)
 
 def set_motor_speed(motor, speed):
-    if speed > 1 or speed < -1:
-            raise ValueError("motor speed must be between 1(forward) and -1(reverse)")
+    if speed > 100 or speed < -100:
+            raise ValueError("motor speed must be between 100(forward) and -100(reverse)")
     if speed > 0: 
         motor.run(FORWARD)
     else: 
