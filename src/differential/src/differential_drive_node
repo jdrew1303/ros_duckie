@@ -17,9 +17,13 @@ RELEASE = Adafruit_MotorHAT.RELEASE
 FORWARD = Adafruit_MotorHAT.FORWARD
 BACKWARD = Adafruit_MotorHAT.BACKWARD
 
-DIFFERENTIAL_LEFT_GAIN = 1
-DIFFERENTIAL_RIGHT_GAIN = 1
-DIFFERENTIAL_YAW_TRIM = 0
+DIFFERENTIAL_LEFT_GAIN = 0.7
+DIFFERENTIAL_RIGHT_GAIN = 0.7
+DIFFERENTIAL_YAW_TRIM = 0.0
+
+BASELINE = 0.1
+WHEEL_RADIUS = 0.0318
+k = 27.0
 
 ADAFRUIT_PULSE_SCALING = 255
 
@@ -28,35 +32,39 @@ def turn_off_motors():
     RIGHT_MOTOR.run(RELEASE)
 
 def set_motor_speed(motor, speed):
-    if speed > 100 or speed < -100:
-            raise ValueError("motor speed must be between 100(forward) and -100(reverse)")
+    if speed > 1 or speed < -1:
+            raise ValueError("motor speed must be between 1(forward) and -1(reverse)")
     if speed > 0: 
         motor.run(FORWARD)
     else: 
         motor.run(BACKWARD)
-    throttle_value = abs(int(speed * ADAFRUIT_PULSE_SCALING / 100))
-    motor.setSpeed(throttle_value)
+    pulse_value = max(min(abs(ADAFRUIT_PULSE_SCALING * u_l_limited), ADAFRUIT_PULSE_SCALING), -ADAFRUIT_PULSE_SCALING)
+    motor.setSpeed(pulse_value)
 
 def move(left_speed, right_speed):
     set_motor_speed(LEFT_MOTOR, left_speed)
     set_motor_speed(RIGHT_MOTOR, right_speed)
 
 def throttle_angle_to_thrust(throttle, steering_angle):
-    throttle = min(1, max(-1, throttle))
-    # scale for the input (can no longer reverse)
-    r = min(max(0, throttle * 100), 100)
-    # normalise the angles to [-180, 180]
-    theta = ((steering_angle + 180) % 360) - 180
     
-    # calculate falloff for the main motor
-    v_a = r * (45 - theta % 90) / 45
-    # compensate for main motor
-    v_b = min(100, 2 * r + v_a, 2 * r - v_a)
-    
-    if theta < -90: return -v_b, -v_a
-    if theta < 0: return -v_a, v_b
-    if theta < 90: return v_b, v_a
-    return v_a, -v_b
+    converted_angle = (steering_angle - 90) / 180
+
+    # adjusting k by gain and trim
+    k_l_inv = (DIFFERENTIAL_LEFT_GAIN - DIFFERENTIAL_YAW_TRIM) / k
+    k_r_inv = (DIFFERENTIAL_RIGHT_GAIN + DIFFERENTIAL_YAW_TRIM) / k
+
+    omega_l = (throttle - 0.5 * converted_angle * BASELINE) / WHEEL_RADIUS
+    omega_r = (throttle + 0.5 * converted_angle * BASELINE) / WHEEL_RADIUS
+
+    # conversion from motor rotation rate to duty cycle
+    u_l = omega_l * k_l_inv
+    u_r = omega_r * k_r_inv
+
+    # limiting output to limit, which is 1.0 for the duckiebot
+    left_motor_throttle = max(min(u_l, 1), -1)
+    right_motor_throttle = max(min(u_r, 1), -1)
+
+    return left_motor_throttle, right_motor_throttle
 
 def command_recieved(message):
     speed = message.speed
