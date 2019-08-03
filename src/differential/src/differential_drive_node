@@ -17,9 +17,6 @@ RELEASE = Adafruit_MotorHAT.RELEASE
 FORWARD = Adafruit_MotorHAT.FORWARD
 BACKWARD = Adafruit_MotorHAT.BACKWARD
 
-ACKERMANN_CAR_LENGTH = 0.10
-ACKERMANN_AXLE_WIDTH = 0.06
-ACKERMAN_WHEEL_OFFSET = 0
 DIFFERENTIAL_LEFT_GAIN = 1
 DIFFERENTIAL_RIGHT_GAIN = 1
 DIFFERENTIAL_YAW_TRIM = 0
@@ -37,34 +34,34 @@ def set_motor_speed(motor, speed):
         motor.run(FORWARD)
     else: 
         motor.run(BACKWARD)
-    throttle_value = abs(int(speed * ADAFRUIT_PULSE_SCALING))
+    throttle_value = abs(int(speed * ADAFRUIT_PULSE_SCALING / 100))
     motor.setSpeed(throttle_value)
 
 def move(left_speed, right_speed):
     set_motor_speed(LEFT_MOTOR, left_speed)
     set_motor_speed(RIGHT_MOTOR, right_speed)
 
-def ackermann_to_differential(throttle, steering_angle):
+def throttle_angle_to_thrust(throttle, steering_angle):
     throttle = min(1, max(-1, throttle))
-    if abs(steering_angle) < 1E-4:
-        left_speed = throttle
-        right_speed = throttle
-    else:
-        angle_radians = math.radians(steering_angle)
-        steer_tan = math.tan(angle_radians)
-        r = ACKERMANN_CAR_LENGTH / steer_tan
-        left_speed = throttle * (1.0 - (ACKERMANN_AXLE_WIDTH * 0.5 - ACKERMAN_WHEEL_OFFSET)/r ) * DIFFERENTIAL_LEFT_GAIN + DIFFERENTIAL_YAW_TRIM
-        right_speed = throttle * (1.0 + (ACKERMANN_AXLE_WIDTH * 0.5 + ACKERMAN_WHEEL_OFFSET)/r ) * DIFFERENTIAL_RIGHT_GAIN - DIFFERENTIAL_YAW_TRIM
-
-    left_speed = min(max(left_speed, -1), 1)
-    right_speed = min(max(right_speed, -1), 1)
-    return (left_speed, right_speed,)
-
+    # scale for the input (can no longer reverse)
+    r = min(max(0, throttle * 100), 100)
+    # normalise the angles to [-180, 180]
+    theta = ((steering_angle + 180) % 360) - 180
+    
+    # calculate falloff for the main motor
+    v_a = r * (45 - theta % 90) / 45
+    # compensate for main motor
+    v_b = min(100, 2 * r + v_a, 2 * r - v_a)
+    
+    if theta < -90: return -v_b, -v_a
+    if theta < 0: return -v_a, v_b
+    if theta < 90: return v_b, v_a
+    return v_a, -v_b
 
 def command_recieved(message):
     speed = message.speed
     steering_angle = message.steering_angle
-    (left_speed, right_speed) = ackermann_to_differential(speed, steering_angle)
+    (left_speed, right_speed) = throttle_angle_to_thrust(speed, steering_angle)
     move(left_speed, right_speed)
 
 if __name__ == '__main__':
