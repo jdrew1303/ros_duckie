@@ -1,0 +1,205 @@
+#!/usr/bin/env python
+
+import cv2
+import rospy
+
+import numpy as np
+
+from sensor_msgs.msg import CompressedImage
+from ackermann_msgs.msg import AckermannDrive
+
+current_steering_angle = 0
+
+def average_slope_intercept(image, line_segments):
+    """
+    This function combines line segments into one or two lane lines
+    If all line slopes are < 0: then we only have detected left lane
+    If all line slopes are > 0: then we only have detected right lane
+    """
+    lane_lines = []
+    if line_segments is None:
+        logging.info('No line_segment segments detected')
+        return lane_lines
+
+    height, width, _ = image.shape
+    left_fit = []
+    right_fit = []
+
+    boundary = 1/3
+    left_region_boundary = width * (1 - boundary)  # left lane line segment should be on left 2/3 of the screen
+    right_region_boundary = width * boundary # right lane line segment should be on left 2/3 of the screen
+
+    for line_segment in line_segments:
+        for x1, y1, x2, y2 in line_segment:
+            if x1 == x2:
+                logging.info('skipping vertical line segment (slope=inf): %s' % line_segment)
+                continue
+            fit = np.polyfit((x1, x2), (y1, y2), 1)
+            slope = fit[0]
+            intercept = fit[1]
+            if slope < 0:
+                if x1 < left_region_boundary and x2 < left_region_boundary:
+                    left_fit.append((slope, intercept))
+            else:
+                if x1 > right_region_boundary and x2 > right_region_boundary:
+                    right_fit.append((slope, intercept))
+
+    left_fit_average = np.average(left_fit, axis=0)
+    if len(left_fit) > 0:
+        lane_lines.append(make_points(image, left_fit_average))
+
+    right_fit_average = np.average(right_fit, axis=0)
+    if len(right_fit) > 0:
+        lane_lines.append(make_points(image, right_fit_average))
+
+    logging.debug('lane lines: %s' % lane_lines)  # [[[316, 720, 484, 432]], [[1009, 720, 718, 432]]]
+
+    return lane_lines
+
+# TODO might be good to keerp track of the previous values and do 
+# some lane averaging (this would allow us to keep driving in patchy 
+# parts with more acuracy)
+def compute_steering_angle(image, lane_lines):
+    # drive straight ahead if you cant find any lanes?
+    if len(lane_lines) == 0:
+        return 0
+
+    image_height, image_width, _ = image.shape
+
+    # if you only find a single lane use that as a reference point and follow
+    if len(lane_lines) == 1:
+        x1, _, x2, _ = lane_lines[0][0]
+        x_offset = x2 - x1
+    # we have two lanes and can do the full calculations
+    else:
+        _, _, left_x2, _ = lane_lines[0][0]
+        _, _, right_x2, _ = lane_lines[1][0]
+        # 0.0 means car pointing to center, -0.03: camera is centered to left, 
+        # +0.03 means camera pointing to right. This is similar to yaw trim for 
+        # the wheels (except in this case for the camera)
+        camera_mid_offset_percent = 0.02 
+        mid = int(image_width / 2 * (1 + camera_mid_offset_percent))
+        x_offset = (left_x2 + right_x2) / 2 - mid
+
+    # find the steering angle, which is angle between navigation direction to end of center line
+    y_offset = int(image_height / 2)
+    # angle (in radian) to center vertical line
+    angle_to_mid_radian = math.atan(x_offset / y_offset)  
+    # angle (in degrees) to center vertical line
+    angle_to_mid_deg = int(angle_to_mid_radian * 180.0 / math.pi)  
+    steering_angle = angle_to_mid_deg
+    return steering_angle
+
+
+def stabilize_steering_angle(curr_steering_angle, new_steering_angle, num_of_lane_lines, max_angle_deviation_two_lines=5, max_angle_deviation_one_lane=1):
+    """
+    Using last steering angle to stabilize the steering angle
+    This can be improved to use last N angles, etc
+    if new angle is too different from current angle, only turn by max_angle_deviation degrees
+    """
+    if num_of_lane_lines == 2 :
+        # if both lane lines detected, then we can deviate more
+        max_angle_deviation = max_angle_deviation_two_lines
+    else :
+        # if only one lane detected, don't deviate too much
+        max_angle_deviation = max_angle_deviation_one_lane
+    
+    angle_deviation = new_steering_angle - curr_steering_angle
+    if abs(angle_deviation) > max_angle_deviation:
+        stabilized_steering_angle = int(curr_steering_angle
+                                        + max_angle_deviation * angle_deviation / abs(angle_deviation))
+    else:
+        stabilized_steering_angle = new_steering_angle
+    logging.info('Proposed angle: %s, stabilized angle: %s' % (new_steering_angle, stabilized_steering_angle))
+    return stabilized_steering_angle
+
+
+def image_recieved(message):
+
+    WHEEL_COMMAND_PUBLiSHER = rospy.Publisher("/drivetrain/ackermann", AckermannDrive, queue_size=1)
+
+    # decompress image from subscription
+    compressed_image = message.data
+    image_string = np.fromstring(compressed_image, np.uint8)
+    bgr_image = cv2.imdecode(image_string, cv2.IMREAD_COLOR)
+
+    # we clean up the image by making it a little blurry (removes small details)
+    blurred_image = cv2.GaussianBlur(bgr_image, (3, 3), 0)
+
+    # convert the image to hsv to allow for better detection in low light 
+    # conditions (Ireland is a pretty grim place weather wise and I dont 
+    # have fluorescent lighting in my home)
+    hsv_image = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
+
+    # create a yellow and white mask for the lane markings and combine them
+    lower_yellow = np.array([65, 100, 100], np.uint8)
+    upper_yellow = np.array([105, 255, 255], np.uint8)
+    yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+
+    lower_white = np.array([0, 0, 200])
+    upper_white = np.array([179, 20, 255])
+    white_mask = cv2.inRange(hsv_image, lower_white, upper_white)
+
+    masked_image = cv2.bitwise_and(hsv_image, hsv_image, mask=cv2.bitwise_or(yellow_mask, white_mask))
+
+    # to edge detection on the lanes (thresholds automatically calculated)
+    # see: https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
+    sigma = 0.33
+    # compute the median of the single channel pixel intensities
+	v = np.median(masked_image)
+	# apply automatic Canny edge detection using the computed median
+	lower_canny = int(max(0, (1.0 - sigma) * v))
+	upper_canny = int(min(255, (1.0 + sigma) * v))
+	canny_edged_image = cv2.Canny(masked_image, lower_canny, upper_canny)
+
+    # remove the top part of the screen
+    canny_height, canny_width = canny_edged_image.shape
+    upper_half_mask = np.zeros_like(canny_edged_image)
+    polygon = np.array([[
+        (0, canny_height * 1 / 2),
+        (canny_width, canny_height * 1 / 2),
+        (canny_width, canny_height),
+        (0, canny_height),
+    ]], np.int32)
+    cv2.fillPoly(upper_half_mask, polygon, 255)
+    cropped_region_of_interest = cv2.bitwise_and(canny_edged_image, upper_half_mask)
+
+    # now we detect the lane line segments using 
+    rho = 1                 # precision in pixel
+    angle = np.pi / 180     # 1 degree in radian
+    min_threshold = 10      # number of votes needed to be a line
+    line_segments = cv2.HoughLinesP(
+        cropped_region_of_interest,
+        rho, angle, min_threshold, 
+        np.array([]), minLineLength=8,
+        maxLineGap=4
+    )
+    
+    # extract the left/right lane lines from the segments
+    lane_lines = average_slope_intercept(frame, line_segments)
+
+    # calculate the steering angle based on the lanes. if no lane 
+    # found just drive straight, if theres a single lane follow that, 
+    # if both aim for the centre
+    new_steering_angle = compute_steering_angle(cropped_region_of_interest, lane_lines)
+
+    # smooth off the steering angle so we dont have the jerky/waddling motion
+    global current_steering_angle
+    current_steering_angle = stabilize_steering_angle(new_steering_angle, len(lane_lines))
+
+    # fire off a message to the drive system
+    ackermann = AckermannDrive()
+    ackerman.speed = 0.6
+    ackermann.steering_angle = current_steering_angle
+
+    WHEEL_COMMAND_PUBLiSHER.publish(ackermann)
+
+
+
+
+if __name__ == '__main__':
+    # this is the business end of the node
+    rospy.init_node('cv_lane_follower', anonymous=False)
+    rospy.on_shutdown(turn_off_motors)
+    rospy.Subscriber('~ackermann', AckermannDrive, command_recieved)
+    rospy.spin()

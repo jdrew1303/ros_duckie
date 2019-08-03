@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cv_lane_follower</name>
+  <version>0.0.1</version>
+  <description>duckiebot computer vision based lane following node</description>
+
+  <maintainer email="j.drew1303@gmail.com">James Drew</maintainer>
+  <license>MIT</license>
+  <author email="j.drew1303@gmail.com">James Drew</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>rospy</build_depend>
+  <build_depend>ackermann_msgs</build_depend>
+
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>ackermann_msgs</exec_depend>
+
+  <export> </export>
+</package>
