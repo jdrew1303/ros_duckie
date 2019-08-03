@@ -146,11 +146,11 @@ def image_recieved(message):
     # see: https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
     sigma = 0.33
     # compute the median of the single channel pixel intensities
-	v = np.median(masked_image)
-	# apply automatic Canny edge detection using the computed median
-	lower_canny = int(max(0, (1.0 - sigma) * v))
-	upper_canny = int(min(255, (1.0 + sigma) * v))
-	canny_edged_image = cv2.Canny(masked_image, lower_canny, upper_canny)
+    v = np.median(masked_image)
+    # apply automatic Canny edge detection using the computed median
+    lower_canny = int(max(0, (1.0 - sigma) * v))
+    upper_canny = int(min(255, (1.0 + sigma) * v))
+    canny_edged_image = cv2.Canny(masked_image, lower_canny, upper_canny)
 
     # remove the top part of the screen
     canny_height, canny_width = canny_edged_image.shape
