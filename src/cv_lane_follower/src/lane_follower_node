@@ -9,7 +9,7 @@ import numpy as np
 from sensor_msgs.msg import CompressedImage
 from ackermann_msgs.msg import AckermannDrive
 
-current_steering_angle = 0
+current_steering_angle = 90
 
 def make_points(frame, line):
     height, width, _ = frame.shape
@@ -73,7 +73,7 @@ def average_slope_intercept(image, line_segments):
 def compute_steering_angle(image, lane_lines):
     # drive straight ahead if you cant find any lanes?
     if len(lane_lines) == 0:
-        return 0
+        return 90
 
     image_height, image_width, _ = image.shape
 
@@ -98,7 +98,7 @@ def compute_steering_angle(image, lane_lines):
     angle_to_mid_radian = math.atan(x_offset / y_offset)  
     # angle (in degrees) to center vertical line
     angle_to_mid_deg = int(angle_to_mid_radian * 180.0 / math.pi)  
-    steering_angle = angle_to_mid_deg
+    steering_angle = angle_to_mid_deg + 90
     return steering_angle
 
 
