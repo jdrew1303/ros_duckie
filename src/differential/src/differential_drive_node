@@ -39,9 +39,11 @@ def set_motor_speed(motor, speed):
     else: 
         motor.run(BACKWARD)
     pulse_value = int(max(min(abs(ADAFRUIT_PULSE_SCALING * speed), ADAFRUIT_PULSE_SCALING), -ADAFRUIT_PULSE_SCALING))
+    print(pulse_value)
     motor.setSpeed(pulse_value)
 
 def move(left_speed, right_speed):
+    print((left_speed, right_speed))
     set_motor_speed(LEFT_MOTOR, left_speed)
     set_motor_speed(RIGHT_MOTOR, right_speed)
 
