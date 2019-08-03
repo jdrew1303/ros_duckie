@@ -7,10 +7,7 @@ repo=$(shell basename -s .git `git config --get remote.origin.url`)
 
 tag=jdrew1303/$(repo):$(branch)
 
-# labels=$(shell ./labels.py)
-
 build:
-	# docker build $(labels) -t $(tag) .
 	docker build -t $(tag) .
 
 push:
