@@ -17,6 +17,7 @@ RUN echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/
 RUN apt-get update && apt-get install -y \
     ros-kinetic-tf-conversions \
     ros-kinetic-joy \
+    ros-kinetic-ackermann-msgs \
     python-pip \
     python-smbus
 
