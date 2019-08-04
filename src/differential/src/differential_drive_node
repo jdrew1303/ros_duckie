@@ -38,7 +38,7 @@ def set_motor_speed(motor, speed):
         motor.run(FORWARD)
     else: 
         motor.run(BACKWARD)
-    pulse_value = int(max(min(abs(ADAFRUIT_PULSE_SCALING * speed), ADAFRUIT_PULSE_SCALING), -ADAFRUIT_PULSE_SCALING))
+    pulse_value = int(floor(fabs(speed) * (ADAFRUIT_PULSE_SCALING - 60) + 60))
     print(pulse_value)
     motor.setSpeed(pulse_value)
 
