@@ -124,8 +124,11 @@ def stabilize_steering_angle(new_steering_angle, num_of_lane_lines, max_angle_de
     print('Proposed angle: %s, stabilized angle: %s' % (new_steering_angle, stabilized_steering_angle))
     return stabilized_steering_angle
 
+MESSAGE_COUNT = 1
 
 def image_recieved(message):
+
+    usb_mount = "/opt/usb/"
 
     WHEEL_COMMAND_PUBLiSHER = rospy.Publisher("drivetrain/ackermann", AckermannDrive, queue_size=1)
 
@@ -143,12 +146,12 @@ def image_recieved(message):
     hsv_image = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
 
     # create a yellow and white mask for the lane markings and combine them
-    lower_yellow = np.array([65, 100, 100], np.uint8)
-    upper_yellow = np.array([105, 255, 255], np.uint8)
+    lower_yellow = np.array([25, 50, 50], np.uint8)
+    upper_yellow = np.array([45, 255, 255], np.uint8)
     yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
 
-    lower_white = np.array([0, 0, 200])
-    upper_white = np.array([179, 20, 255])
+    lower_white = np.array([0, 0, 150])
+    upper_white = np.array([180, 100, 255])
     white_mask = cv2.inRange(hsv_image, lower_white, upper_white)
 
     masked_image = cv2.bitwise_and(hsv_image, hsv_image, mask=cv2.bitwise_or(yellow_mask, white_mask))
@@ -201,13 +204,24 @@ def image_recieved(message):
     # fire off a message to the drive system
     ackermann = AckermannDrive()
     ackermann.speed = 0.3
-    ackermann.steering_angle = current_steering_angle
+    ackermann.steering_angle = new_steering_angle
 
-    print('steering angle: %s' % current_steering_angle)
+    print('steering angle: %s' % new_steering_angle)
 
     WHEEL_COMMAND_PUBLiSHER.publish(ackermann)
 
+    global MESSAGE_COUNT
 
+    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "bgr_image", new_steering_angle), bgr_image)
+    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "blurred_image", new_steering_angle), blurred_image)
+    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "hsv_image", new_steering_angle), hsv_image)
+    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "masked_image", new_steering_angle), masked_image)
+    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "canny_edged_image", new_steering_angle), canny_edged_image)
+    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "cropped_region_of_interest", new_steering_angle), cropped_region_of_interest)
+    MESSAGE_COUNT = MESSAGE_COUNT + 1
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        cv2.destroyAllWindows()
+        print("exiting the camera node")
 
 
 if __name__ == '__main__':
