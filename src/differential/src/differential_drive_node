@@ -47,7 +47,7 @@ def move(left_speed, right_speed):
     set_motor_speed(LEFT_MOTOR, left_speed)
     set_motor_speed(RIGHT_MOTOR, right_speed)
 
-def throttle_angle_to_thrust(throttle, steering_angle):
+def throttle_angle_to_thrust(speed, steering_angle):
 
     LEFT_SIGN = 1
     RIGHT_SIGN = 1

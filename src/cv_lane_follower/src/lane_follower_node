@@ -200,7 +200,7 @@ def image_recieved(message):
 
     # fire off a message to the drive system
     ackermann = AckermannDrive()
-    ackermann.speed = 0.6
+    ackermann.speed = 0.4
     ackermann.steering_angle = new_steering_angle
 
     print('steering angle: %s' % current_steering_angle)
