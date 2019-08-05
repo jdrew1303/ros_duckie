@@ -6,7 +6,7 @@ import io
 from sensor_msgs.msg import CompressedImage
 from picamera import PiCamera
 
-CAMERA_FRAMERATE = 8.0
+CAMERA_FRAMERATE = 6.0
 CAMERA_WIDTH_IN_PIXELS = 640
 CAMERA_HEIGHT_IN_PIXELS = 400
 CAMERA_RESOLUTION = (CAMERA_WIDTH_IN_PIXELS, CAMERA_HEIGHT_IN_PIXELS)
