@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-
-from math import fabs, floor
+import atexit
 import rospy
 
+from math import fabs, floor
 from ackermann_msgs.msg import AckermannDrive
 from Adafruit_MotorHAT import Adafruit_MotorHAT
 
@@ -10,30 +10,17 @@ MOTORHAT = Adafruit_MotorHAT(addr=0x60)
 LEFT_MOTOR = MOTORHAT.getMotor(1)
 RIGHT_MOTOR = MOTORHAT.getMotor(2)
 
-LEFT_MOTOR_SPEED = 0
-RIGHT_MOTOR_SPEED = 0
-
 RELEASE = Adafruit_MotorHAT.RELEASE
 FORWARD = Adafruit_MotorHAT.FORWARD
 BACKWARD = Adafruit_MotorHAT.BACKWARD
 
-DIFFERENTIAL_LEFT_GAIN = 0.7
-DIFFERENTIAL_RIGHT_GAIN = 0.7
-DIFFERENTIAL_YAW_TRIM = 0.0
-
-BASELINE = 0.1
-WHEEL_RADIUS = 0.0318
-k = 27.0
-
 ADAFRUIT_PULSE_SCALING = 255
 
-def turn_off_motors():
+def release_motors():
     LEFT_MOTOR.run(RELEASE)
     RIGHT_MOTOR.run(RELEASE)
 
 def set_motor_speed(motor, speed):
-    if speed > 1 or speed < -1:
-            raise ValueError("motor speed must be between 1(forward) and -1(reverse)")
     if speed > 0: 
         motor.run(FORWARD)
     else: 
@@ -72,8 +59,10 @@ def command_recieved(message):
     move(left_speed, right_speed)
 
 if __name__ == '__main__':
+    atexit.register(release_motors)
+    release_motors()
     # this is the business end of the node
     rospy.init_node('drivetrain', anonymous=False)
-    rospy.on_shutdown(turn_off_motors)
+    rospy.on_shutdown(release_motors)
     rospy.Subscriber('~ackermann', AckermannDrive, command_recieved)
     rospy.spin()

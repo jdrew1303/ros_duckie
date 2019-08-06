@@ -143,7 +143,7 @@ def image_recieved(message):
     # convert the image to hsv to allow for better detection in low light 
     # conditions (Ireland is a pretty grim place weather wise and I dont 
     # have fluorescent lighting in my home)
-    hsv_image = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
+    hsv_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
 
     # create a yellow and white mask for the lane markings and combine them
     lower_yellow = np.array([25, 50, 50], np.uint8)
@@ -181,11 +181,11 @@ def image_recieved(message):
     # now we detect the lane line segments using 
     rho = 1                 # precision in pixel
     angle = np.pi / 180     # 1 degree in radian
-    min_threshold = 10      # number of votes needed to be a line
+    min_threshold = 15      # number of votes needed to be a line
     line_segments = cv2.HoughLinesP(
         cropped_region_of_interest,
         rho, angle, min_threshold, 
-        np.array([]), minLineLength=8,
+        np.array([]), minLineLength=3,
         maxLineGap=4
     )
     
