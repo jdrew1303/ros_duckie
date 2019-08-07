@@ -112,9 +112,6 @@ def image_recieved(message):
     image_string = np.fromstring(compressed_image, np.uint8)
     bgr_image = cv2.imdecode(image_string, cv2.IMREAD_COLOR)
 
-    # we clean up the image by making it a little blurry (removes small details)
-    blurred_image = cv2.GaussianBlur(bgr_image, (3, 3), 0)
-
     # convert the image to hsv to allow for better detection in low light 
     # conditions (Ireland is a pretty grim place weather wise and I dont 
     # have fluorescent lighting in my home)
@@ -174,7 +171,7 @@ def image_recieved(message):
     
     # fire off a message to the drive system
     ackermann = AckermannDrive()
-    ackermann.speed = 0.3
+    ackermann.speed = 0.5
     ackermann.steering_angle = int(new_steering_angle)
 
     print('steering angle: %s' % new_steering_angle)
