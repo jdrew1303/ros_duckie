@@ -9,8 +9,6 @@ import numpy as np
 from sensor_msgs.msg import CompressedImage
 from ackermann_msgs.msg import AckermannDrive
 
-current_steering_angle = 90
-
 def make_points(frame, line):
     height, width, _ = frame.shape
     slope, intercept = line
@@ -101,29 +99,6 @@ def compute_steering_angle(image, lane_lines):
     steering_angle = angle_to_mid_deg + 90
     return steering_angle
 
-
-def stabilize_steering_angle(new_steering_angle, num_of_lane_lines, max_angle_deviation_two_lines=5, max_angle_deviation_one_lane=1):
-    """
-    Using last steering angle to stabilize the steering angle
-    This can be improved to use last N angles, etc
-    if new angle is too different from current angle, only turn by max_angle_deviation degrees
-    """
-    if num_of_lane_lines == 2 :
-        # if both lane lines detected, then we can deviate more
-        max_angle_deviation = max_angle_deviation_two_lines
-    else :
-        # if only one lane detected, don't deviate too much
-        max_angle_deviation = max_angle_deviation_one_lane
-    
-    angle_deviation = new_steering_angle - current_steering_angle
-    if abs(angle_deviation) > max_angle_deviation:
-        stabilized_steering_angle = int(current_steering_angle
-                                        + max_angle_deviation * angle_deviation / abs(angle_deviation))
-    else:
-        stabilized_steering_angle = new_steering_angle
-    print('Proposed angle: %s, stabilized angle: %s' % (new_steering_angle, stabilized_steering_angle))
-    return stabilized_steering_angle
-
 MESSAGE_COUNT = 1
 
 def image_recieved(message):
@@ -196,15 +171,11 @@ def image_recieved(message):
     # found just drive straight, if theres a single lane follow that, 
     # if both aim for the centre
     new_steering_angle = compute_steering_angle(bgr_image, lane_lines)
-
-    # smooth off the steering angle so we dont have the jerky/waddling motion
-    global current_steering_angle
-    current_steering_angle = stabilize_steering_angle(new_steering_angle, len(lane_lines))
-
+    
     # fire off a message to the drive system
     ackermann = AckermannDrive()
     ackermann.speed = 0.3
-    ackermann.steering_angle = new_steering_angle
+    ackermann.steering_angle = int(new_steering_angle)
 
     print('steering angle: %s' % new_steering_angle)
 
@@ -212,12 +183,12 @@ def image_recieved(message):
 
     global MESSAGE_COUNT
 
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "bgr_image", new_steering_angle), bgr_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "blurred_image", new_steering_angle), blurred_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "hsv_image", new_steering_angle), hsv_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "masked_image", new_steering_angle), masked_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "canny_edged_image", new_steering_angle), canny_edged_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "cropped_region_of_interest", new_steering_angle), cropped_region_of_interest)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "bgr_image", new_steering_angle), bgr_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "blurred_image", new_steering_angle), blurred_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "hsv_image", new_steering_angle), hsv_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "masked_image", new_steering_angle), masked_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "canny_edged_image", new_steering_angle), canny_edged_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "cropped_region_of_interest", new_steering_angle), cropped_region_of_interest)
     MESSAGE_COUNT = MESSAGE_COUNT + 1
     if cv2.waitKey(1) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
