@@ -25,7 +25,7 @@ def set_motor_speed(motor, speed):
         motor.run(FORWARD)
     else: 
         motor.run(BACKWARD)
-    pulse_value = int(floor(fabs(speed) * (ADAFRUIT_PULSE_SCALING - 60) + 60))
+    pulse_value = int((speed) * (ADAFRUIT_PULSE_SCALING - 60) + 60)
     print(pulse_value)
     motor.setSpeed(pulse_value)
 
@@ -34,23 +34,20 @@ def move(left_speed, right_speed):
     set_motor_speed(LEFT_MOTOR, left_speed)
     set_motor_speed(RIGHT_MOTOR, right_speed)
 
-def throttle_angle_to_thrust(speed, steering_angle):
-
-    LEFT_SIGN = 1
-    RIGHT_SIGN = 1
-
-    AXEL_TO_RADIUS_RATIO = 1.0
-    
-    angle = (steering_angle - 90) / 90
-
-    vmax = 1.0 / (1.0 + 0.5 * AXEL_TO_RADIUS_RATIO)
-
-    v = speed * vmax
-
-    vl = vmax + v * (- angle * 0.5 * AXEL_TO_RADIUS_RATIO) * LEFT_SIGN
-    vr = vmax + v * (+ angle * 0.5 * AXEL_TO_RADIUS_RATIO) * RIGHT_SIGN
-
-    return (vl, vr)
+# To maintain a constant speed you will need to have throttle under .5 
+# in either direction. Once you go above this value you sacrifice control 
+# for speed. So keep it under the limit and scale your thrust instead 
+# (take 0.5 as the max and if you need 0.4 then that equates to 0.2).
+# r = speed in the range of [-1,1]
+# theta is the angle in degrees [0, 360] (90 is straight)
+def throttle_angle_to_thrust(r=0.5, theta=0.0):
+    theta = (((theta - 90) + 180) % 360) - 180  # normalize value to [-180, 180)
+    v_a = r * (45 - theta % 90) / 45          # falloff of main motor
+    v_b = min(100, 2 * r + v_a, 2 * r - v_a)  # compensation of other motor
+    if theta < -90: return -v_b, -v_a
+    if theta < 0:   return -v_a, v_b
+    if theta < 90:  return v_b, v_a
+    return v_a, -v_b
 
 def command_recieved(message):
     speed = message.speed
