@@ -44,6 +44,7 @@ def move(left_speed, right_speed):
 # r = speed in the range of [-1,1]
 # theta is the angle in degrees [0, 360] (90 is straight)
 def throttle_angle_to_thrust(r=0.5, theta=0.0):
+    if theta == 90: return 1, 1
     theta = (((theta - 90) + 180) % 360) - 180  # normalize value to [-180, 180)
     v_a = r * (45 - theta % 90) / 45          # falloff of main motor
     v_b = min(100, 2 * r + v_a, 2 * r - v_a)  # compensation of other motor
