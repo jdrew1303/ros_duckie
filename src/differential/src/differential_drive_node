@@ -43,6 +43,7 @@ def move(left_speed, right_speed):
 # (take 0.5 as the max and if you need 0.4 then that equates to 0.2).
 # r = speed in the range of [-1,1]
 # theta is the angle in degrees [0, 360] (90 is straight)
+# modified from https://robotics.stackexchange.com/a/2016
 def throttle_angle_to_thrust(r=0.5, theta=0.0):
     if theta == 90: return 1, 1
     theta = (((theta - 90) + 180) % 360) - 180  # normalize value to [-180, 180)
