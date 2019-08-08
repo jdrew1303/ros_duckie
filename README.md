@@ -1,5 +1,7 @@
 # ros_duckie
 
+# NOTE: development will continue off the `develop` branch until grading has been finished. Please use the master branch for grading.
+
 ```bash
 git clone repo 
 
