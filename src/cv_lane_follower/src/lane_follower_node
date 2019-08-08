@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# what a stupid language :(
+from __future__ import division
+
 import cv2
 import math
 import rospy
@@ -8,8 +11,6 @@ import numpy as np
 
 from sensor_msgs.msg import CompressedImage
 from ackermann_msgs.msg import AckermannDrive
-
-current_steering_angle = 90
 
 def make_points(frame, line):
     height, width, _ = frame.shape
@@ -88,7 +89,7 @@ def compute_steering_angle(image, lane_lines):
         # 0.0 means car pointing to center, -0.03: camera is centered to left, 
         # +0.03 means camera pointing to right. This is similar to yaw trim for 
         # the wheels (except in this case for the camera)
-        camera_mid_offset_percent = 0.02 
+        camera_mid_offset_percent = 0.0 
         mid = int(image_width / 2 * (1 + camera_mid_offset_percent))
         x_offset = (left_x2 + right_x2) / 2 - mid
 
@@ -100,29 +101,6 @@ def compute_steering_angle(image, lane_lines):
     angle_to_mid_deg = int(angle_to_mid_radian * 180.0 / math.pi)  
     steering_angle = angle_to_mid_deg + 90
     return steering_angle
-
-
-def stabilize_steering_angle(new_steering_angle, num_of_lane_lines, max_angle_deviation_two_lines=5, max_angle_deviation_one_lane=1):
-    """
-    Using last steering angle to stabilize the steering angle
-    This can be improved to use last N angles, etc
-    if new angle is too different from current angle, only turn by max_angle_deviation degrees
-    """
-    if num_of_lane_lines == 2 :
-        # if both lane lines detected, then we can deviate more
-        max_angle_deviation = max_angle_deviation_two_lines
-    else :
-        # if only one lane detected, don't deviate too much
-        max_angle_deviation = max_angle_deviation_one_lane
-    
-    angle_deviation = new_steering_angle - current_steering_angle
-    if abs(angle_deviation) > max_angle_deviation:
-        stabilized_steering_angle = int(current_steering_angle
-                                        + max_angle_deviation * angle_deviation / abs(angle_deviation))
-    else:
-        stabilized_steering_angle = new_steering_angle
-    print('Proposed angle: %s, stabilized angle: %s' % (new_steering_angle, stabilized_steering_angle))
-    return stabilized_steering_angle
 
 MESSAGE_COUNT = 1
 
@@ -136,9 +114,6 @@ def image_recieved(message):
     compressed_image = message.data
     image_string = np.fromstring(compressed_image, np.uint8)
     bgr_image = cv2.imdecode(image_string, cv2.IMREAD_COLOR)
-
-    # we clean up the image by making it a little blurry (removes small details)
-    blurred_image = cv2.GaussianBlur(bgr_image, (3, 3), 0)
 
     # convert the image to hsv to allow for better detection in low light 
     # conditions (Ireland is a pretty grim place weather wise and I dont 
@@ -196,15 +171,11 @@ def image_recieved(message):
     # found just drive straight, if theres a single lane follow that, 
     # if both aim for the centre
     new_steering_angle = compute_steering_angle(bgr_image, lane_lines)
-
-    # smooth off the steering angle so we dont have the jerky/waddling motion
-    global current_steering_angle
-    current_steering_angle = stabilize_steering_angle(new_steering_angle, len(lane_lines))
-
+    
     # fire off a message to the drive system
     ackermann = AckermannDrive()
-    ackermann.speed = 0.3
-    ackermann.steering_angle = new_steering_angle
+    ackermann.speed = 0.5
+    ackermann.steering_angle = int(new_steering_angle)
 
     print('steering angle: %s' % new_steering_angle)
 
@@ -212,12 +183,11 @@ def image_recieved(message):
 
     global MESSAGE_COUNT
 
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "bgr_image", new_steering_angle), bgr_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "blurred_image", new_steering_angle), blurred_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "hsv_image", new_steering_angle), hsv_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "masked_image", new_steering_angle), masked_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "canny_edged_image", new_steering_angle), canny_edged_image)
-    cv2.imwrite("%s%d_%s_%03d.png" % (usb_mount, MESSAGE_COUNT, "cropped_region_of_interest", new_steering_angle), cropped_region_of_interest)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "bgr_image", new_steering_angle), bgr_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "hsv_image", new_steering_angle), hsv_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "masked_image", new_steering_angle), masked_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "canny_edged_image", new_steering_angle), canny_edged_image)
+    cv2.imwrite("%s%d_%s_%s.png" % (usb_mount, MESSAGE_COUNT, "cropped_region_of_interest", new_steering_angle), cropped_region_of_interest)
     MESSAGE_COUNT = MESSAGE_COUNT + 1
     if cv2.waitKey(1) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
@@ -227,5 +197,5 @@ def image_recieved(message):
 if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('cv_lane_follower', anonymous=False)
-    rospy.Subscriber('camera/image', CompressedImage, image_recieved)
+    rospy.Subscriber('camera/image', CompressedImage, image_recieved, queue_size=2)
     rospy.spin()
