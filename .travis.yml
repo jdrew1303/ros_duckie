@@ -35,7 +35,7 @@ script:
   - buildctl build --frontend dockerfile.v0 --local dockerfile=. --local context=. --exporter image --exporter-opt name=docker.io/${IMAGE_TAG} --exporter-opt push=true --frontend-opt platform=linux/armhf --frontend-opt filename=./Dockerfile
   # create a manifest file
   - export DOCKER_CLI_EXPERIMENTAL=enabled
-  - docker manifest create ${IMAGE_TAG}
+  - docker manifest create ${IMAGE_TAG} ${IMAGE_TAG}
   - docker manifest annotate ${IMAGE_TAG} ${IMAGE_TAG} --arch arm
   - docker manifest push ${IMAGE_TAG}
 
