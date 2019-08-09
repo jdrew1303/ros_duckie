@@ -30,7 +30,7 @@ script:
   # login to docker hub
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   # get the name for our tag
-  - export IMAGE_TAG="$TRAVIS_REPO_SLUG:$(git rev-parse --abbrev-ref HEAD)"
+  - export IMAGE_TAG="$TRAVIS_REPO_SLUG:$TRAVIS_BRANCH"
   # do a cross build for arm and push to docker hub
   - buildctl build --frontend dockerfile.v0 --local dockerfile=. --local context=. --exporter image --exporter-opt name=docker.io/${IMAGE_TAG} --exporter-opt push=true --frontend-opt platform=linux/armhf --frontend-opt filename=./Dockerfile
   # create a manifest file
