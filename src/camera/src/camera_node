@@ -1,57 +1,39 @@
 #!/usr/bin/env python
-
-from __future__ import division
-
 import rospy
-import io
+import os
 
 from sensor_msgs.msg import CompressedImage
-from picamera import PiCamera
 
-CAMERA_FRAMERATE = 20.0
-CAMERA_WIDTH_IN_PIXELS = 160
-CAMERA_HEIGHT_IN_PIXELS = 100
-CAMERA_RESOLUTION = (CAMERA_WIDTH_IN_PIXELS, CAMERA_HEIGHT_IN_PIXELS)
-CAMERA = PiCamera(0, 'none', False, CAMERA_RESOLUTION, CAMERA_FRAMERATE, 0, None, 'reset', None)
+# we need to add this to have raspberry pi expose the camera as a usb camera
+os.system('sudo modprobe bcm2835-v4l2') 
 
-IO_STREAM = io.BytesIO()
-CAMERA_CAPTURE = CAMERA.capture_continuous(IO_STREAM,'jpeg',use_video_port=True)
-# TODO possibly move this to the main and pass in. didnt want to use lambdas in 
-# python (Im not really sure how they behave). It may also be possible to use 
-# cv2.VideoCapture directly like so:
-#   os.system('sudo modprobe bcm2835-v4l2') 
-#   cap = cv2.VideoCapture(0)
-# you may need to run the capture on a seperate thread to be able to capture and 
-# dispatch at 30+ frames per second. This is on the todo list. Performance will 
-# also need to be evaluated and you no longer have control of the camera led.
+CAMERA = cv2.VideoCapture(0)
+CAMERA.set(cv2.CAP_PROP_FRAME_WIDTH, 160)
+CAMERA.set(cv2.CAP_PROP_FRAME_HEIGHT, 100)
 
 def publish_image_to_topic(timer_event):
         CAMERA_NODE_PUBLISHER = rospy.Publisher("~image", CompressedImage, queue_size=1)
         # fetch the current image from the camera
-        CAMERA_CAPTURE.next()
-        IO_STREAM.seek(0)
-        image_data = IO_STREAM.getvalue()
+        (grabbed, frame) = stream.read()
 
         # build message
         message = CompressedImage()
-        message.data = image_data
+        message.data = frame
         message.format = "jpeg"
         message.header.stamp = rospy.Time.now()
             
         # publish new image to the topic
         CAMERA_NODE_PUBLISHER.publish(message)
-            
-        # clear out the current image
-        IO_STREAM.seek(0)
-        IO_STREAM.truncate()
 
 def cleanup_on_shutdown():
-    CAMERA.close()
+    CAMERA.release()
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('camera', anonymous=False)
     rospy.on_shutdown(cleanup_on_shutdown)
+    CAMERA_FRAMERATE = 20.0
     FPS_TO_CAPTURE = rospy.Duration.from_sec(1.0/CAMERA_FRAMERATE)
     MAIN_CAMERA_LOOP = rospy.Timer(FPS_TO_CAPTURE, publish_image_to_topic)
     rospy.spin()
