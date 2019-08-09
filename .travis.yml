@@ -5,11 +5,12 @@ script:
   # we need to enable experimental support for cross builds
   - echo '{"experimental":true}' | sudo tee /etc/docker/daemon.json
   - sudo service docker restart
+  - docker buildx ls
   # login to docker hub
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   # get the name for our tag
   - export IMAGE_TAG="$TRAVIS_REPO_SLUG:$(git rev-parse --abbrev-ref HEAD)"
   # do a cross build for arm 
-  - docker build -t $IMAGE_TAG .
+  - docker buildx build --platform linux/arm64,linux/arm/v7 -t "$IMAGE_TAG" .
   # push to docker hub
-  - docker push $IMAGE_TAG
+  - docker push "$IMAGE_TAG"
