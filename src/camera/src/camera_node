@@ -15,7 +15,7 @@ CAMERA.set(cv2.CAP_PROP_FRAME_HEIGHT, 100)
 def publish_image_to_topic(timer_event):
         CAMERA_NODE_PUBLISHER = rospy.Publisher("~image", CompressedImage, queue_size=1)
         # fetch the current image from the camera
-        (grabbed, frame) = stream.read()
+        (grabbed, frame) = CAMERA.read()
 
         # build message
         message = CompressedImage()
