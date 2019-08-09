@@ -7,14 +7,9 @@ from sensor_msgs.msg import CompressedImage
 # we need to add this to have raspberry pi expose the camera as a usb camera
 os.system('sudo modprobe bcm2835-v4l2') 
 
-CAMERA_FRAMERATE = 20.0
-CAMERA_WIDTH_IN_PIXELS = 160
-CAMERA_HEIGHT_IN_PIXELS = 100
-CAMERA_RESOLUTION = (CAMERA_WIDTH_IN_PIXELS, CAMERA_HEIGHT_IN_PIXELS)
-
 CAMERA = cv2.VideoCapture(0)
-CAMERA.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH_IN_PIXELS)
-CAMERA.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT_IN_PIXELS)
+CAMERA.set(cv2.CAP_PROP_FRAME_WIDTH, 160)
+CAMERA.set(cv2.CAP_PROP_FRAME_HEIGHT, 100)
 
 def publish_image_to_topic(timer_event):
         CAMERA_NODE_PUBLISHER = rospy.Publisher("~image", CompressedImage, queue_size=1)
@@ -38,6 +33,7 @@ if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('camera', anonymous=False)
     rospy.on_shutdown(cleanup_on_shutdown)
+    CAMERA_FRAMERATE = 20.0
     FPS_TO_CAPTURE = rospy.Duration.from_sec(1.0/CAMERA_FRAMERATE)
     MAIN_CAMERA_LOOP = rospy.Timer(FPS_TO_CAPTURE, publish_image_to_topic)
     rospy.spin()
