@@ -1,0 +1,44 @@
+sudo: true
+dist: xenial
+language: minimal
+
+# where the magic happens
+services:
+  - docker
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+# Only clone the most recent commit.
+git:
+  depth: 1
+
+# skip the install step
+install: true
+
+# You can run a program compiled for ARM on amd64 linux machine 
+# if it has binfmt_misc support. It essentially allows you to 
+# run a program without worrying about which architecture it was 
+# built for.
+before_install:
+  - sudo docker run --privileged linuxkit/binfmt:v0.6
+  - sudo docker run -d --privileged -p 1234:1234 --name buildkit moby/buildkit:latest --addr tcp://0.0.0.0:1234 --oci-worker-platform linux/amd64 --oci-worker-platform linux/armhf
+  - sudo docker cp buildkit:/usr/bin/buildctl /usr/bin/
+  - export BUILDKIT_HOST=tcp://0.0.0.0:1234
+script:
+  # login to docker hub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  # get the name for our tag (short commit id)
+  - export IMAGE_TAG="$TRAVIS_REPO_SLUG:$(git log -1 --format=%h)"
+  # do a cross build for arm and push to docker hub
+  - buildctl build --frontend dockerfile.v0 --local dockerfile=. --local context=. --exporter image --exporter-opt name=docker.io/${IMAGE_TAG} --exporter-opt push=true --frontend-opt platform=linux/armhf --frontend-opt filename=./Dockerfile
+  # create a manifest file
+  - export DOCKER_CLI_EXPERIMENTAL=enabled
+  - docker manifest create ${IMAGE_TAG} ${IMAGE_TAG}
+  - docker manifest annotate ${IMAGE_TAG} ${IMAGE_TAG} --arch arm
+  - docker manifest push ${IMAGE_TAG}
+
+# There are just too many emails from travis :/
+notifications:
+  email: false
