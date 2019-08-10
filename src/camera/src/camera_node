@@ -19,7 +19,7 @@ def publish_image_to_topic(timer_event):
 
         # build message
         message = CompressedImage()
-        message.data = frame
+        message.data = cv2.imencode('.jpg', frame)[1].tostring()
         message.format = "jpeg"
         message.header.stamp = rospy.Time.now()
             
