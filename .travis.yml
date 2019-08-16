@@ -33,6 +33,7 @@ script:
   - if [ $TRAVIS_PULL_REQUEST ]; then export BRANCH_NAME=$TRAVIS_PULL_REQUEST_BRANCH; else export BRANCH_NAME=TRAVIS_BRANCH; fi
   - export IMAGE_TAG="$TRAVIS_REPO_SLUG:$BRANCH_NAME"
   - export GIT_COMMIT_AUTHOR=$(git --no-pager show -s --format='%an <%ae>' $TRAVIS_COMMIT)
+  - echo $GIT_COMMIT_AUTHOR && echo IMAGE_TAG
   # do a cross build for arm and push to docker hub
   - buildctl build --frontend dockerfile.v0 --local dockerfile=. --local context=. --exporter image --exporter-opt name=docker.io/${IMAGE_TAG} --exporter-opt push=true --frontend-opt platform=linux/armhf --frontend-opt filename=./Dockerfile
   # create a manifest file
