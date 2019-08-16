@@ -1,9 +1,7 @@
 FROM arm32v7/ros:kinetic-ros-base-xenial
 
 # tag our build with git information
-ARG GIT_COMMIT=unspecified
 LABEL git_commit=$GIT_COMMIT
-ARG GIT_COMMIT_AUTHOR=unspecified
 LABEL git_commit_author=$GIT_COMMIT_AUTHOR
 
 # 
