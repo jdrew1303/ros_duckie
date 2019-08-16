@@ -202,5 +202,5 @@ def image_recieved(message):
 if __name__ == '__main__':
     # this is the business end of the node
     rospy.init_node('cv_lane_follower', anonymous=False)
-    rospy.Subscriber('camera/image', CompressedImage, image_recieved, queue_size=2)
+    rospy.Subscriber('~/image/compressed', CompressedImage, image_recieved, queue_size=2)
     rospy.spin()

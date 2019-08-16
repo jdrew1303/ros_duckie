@@ -17,7 +17,9 @@ sleep 10
 rosrun cv_lane_follower lane_follower_node & 
 rosrun differential differential_drive_node &
 sleep 5
-rosrun camera camera_node &
+
+# now uses https://github.com/UbiquityRobotics/raspicam_node instead of custom node
+roslaunch raspicam_node camerav2_1280x960.launch height:=100 width:=160 framerate:=20 &
 
 
 while sleep 60; do
