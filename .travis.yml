@@ -34,7 +34,7 @@ script:
   - export IMAGE_TAG="$TRAVIS_REPO_SLUG:$BRANCH_NAME"
   - export GIT_COMMIT_AUTHOR=$(git --no-pager show -s --format='%an <%ae>' $TRAVIS_COMMIT)
   # do a cross build for arm and push to docker hub
-  - buildctl build --frontend dockerfile.v0 --frontend-opt build-arg:GIT_COMMIT=$TRAVIS_COMMIT --frontend-opt build-arg:GIT_COMMIT_AUTHOR=$GIT_COMMIT_AUTHOR --local dockerfile=. --local context=. --exporter image --exporter-opt name=docker.io/${IMAGE_TAG} --exporter-opt push=true --frontend-opt platform=linux/armhf --frontend-opt filename=./Dockerfile
+  - buildctl build --frontend dockerfile.v0 --local dockerfile=. --frontend-opt build-arg:GIT_COMMIT=$TRAVIS_COMMIT --frontend-opt build-arg:GIT_COMMIT_AUTHOR=$GIT_COMMIT_AUTHOR --local context=. --exporter image --exporter-opt name=docker.io/${IMAGE_TAG} --exporter-opt push=true --frontend-opt platform=linux/armhf --frontend-opt filename=./Dockerfile
   # create a manifest file
   - export DOCKER_CLI_EXPERIMENTAL=enabled
   - docker manifest create ${IMAGE_TAG} ${IMAGE_TAG}
