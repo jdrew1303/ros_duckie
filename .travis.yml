@@ -30,7 +30,7 @@ script:
   # login to docker hub
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   # get the name for our tag (short commit id)
-  - if [ $TRAVIS_PULL_REQUEST ]; then export BRANCH_NAME=$TRAVIS_PULL_REQUEST_BRANCH; else export BRANCH_NAME=TRAVIS_BRANCH; fi
+  - export BRANCH_NAME=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - export IMAGE_TAG="$TRAVIS_REPO_SLUG:$BRANCH_NAME"
   - export GIT_COMMIT_AUTHOR=$(git --no-pager show -s --format='%an <%ae>' $TRAVIS_COMMIT)
   - echo $GIT_COMMIT_AUTHOR && echo $IMAGE_TAG
