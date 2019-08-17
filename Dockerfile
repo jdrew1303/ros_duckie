@@ -31,11 +31,11 @@ RUN add-apt-repository "deb http://mirrordirector.raspbian.org/raspbian/ stretch
     add-apt-repository "deb http://archive.raspberrypi.org/debian/ stretch main ui" && \
     curl -so - http://archive.raspberrypi.org/debian/raspberrypi.gpg.key | apt-key add - && \
     apt-get update && \
-    apt-get install libraspberrypi0
+    apt-get install -y libraspberrypi0
 
 RUN curl 'https://packages.ubiquityrobotics.com/ubuntu/ubiquity/pool/main/r/ros-kinetic-raspicam-node/ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb' --output "ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb"
-RUN apt install ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb
-RUN apt-get -f install
+RUN apt install -y ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb
+RUN apt-get -f -y install
 
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
