@@ -13,18 +13,18 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 ENV ROS_DISTRO kinetic
 
-RUN apt-get install software-properties-common && apt-get update
-
 # install ros bits and pieces
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116 && \
     echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list && \
     apt-get update && apt-get install -y \
+    software-properties-common \
     ros-kinetic-perception \
     ros-kinetic-tf-conversions \
     ros-kinetic-joy \
     ros-kinetic-ackermann-msgs \
     python-pip \
-    python-smbus
+    python-smbus \
+    apt-get update
 
 # add the raspberry pi camera node from ubiquity robotics
 RUN add-apt-repository "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi" && \
