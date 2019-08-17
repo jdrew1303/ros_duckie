@@ -30,7 +30,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9
 RUN add-apt-repository "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi" && \
     add-apt-repository "deb http://archive.raspberrypi.org/debian/ stretch main ui" && \
     add-apt-repository "deb https://packages.ubiquityrobotics.com/ubuntu/ubiquity xenial main" && \
-    curl -so - http://archive.raspberrypi.org/debian/raspberrypi.gpg.key | sudo apt-key add - && \
+    curl -so - http://archive.raspberrypi.org/debian/raspberrypi.gpg.key | apt-key add - && \
     apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key C3032ED8 && \
     apt-get update && \
     apt install ros-kinetic-raspicam-node
