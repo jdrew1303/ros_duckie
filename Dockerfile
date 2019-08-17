@@ -29,11 +29,12 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9
 # add the raspberry pi camera node from ubiquity robotics
 RUN add-apt-repository "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi" && \
     add-apt-repository "deb http://archive.raspberrypi.org/debian/ stretch main ui" && \
-    add-apt-repository "deb https://packages.ubiquityrobotics.com/ubuntu/ubiquity xenial main" && \
     curl -so - http://archive.raspberrypi.org/debian/raspberrypi.gpg.key | apt-key add - && \
-    apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key C3032ED8 && \
-    apt-get update && \
-    apt install ros-kinetic-raspicam-node
+    apt-get update
+
+RUN curl 'https://packages.ubiquityrobotics.com/ubuntu/ubiquity/pool/main/r/ros-kinetic-raspicam-node/ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb' --output "ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb"
+RUN dpkg -i ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb
+RUN apt-get -f install
 
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
