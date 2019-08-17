@@ -17,6 +17,7 @@ ENV ROS_DISTRO kinetic
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116 && \
     echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list && \
     apt-get update && apt-get install -y \
+    raspberrypi-bootloader \
     ros-kinetic-perception \
     ros-kinetic-tf-conversions \
     ros-kinetic-joy \
@@ -26,7 +27,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9
 
 # manually install camera node (I couldnt get the repo working -_-)
 RUN curl 'https://packages.ubiquityrobotics.com/ubuntu/ubiquity/pool/main/r/ros-kinetic-raspicam-node/ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb' --output "ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb"
-RUN apt-get install ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb
+RUN apt-get -f install ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb
 
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
