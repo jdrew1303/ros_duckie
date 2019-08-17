@@ -25,9 +25,8 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9
     python-smbus
 
 # manually install camera node (I couldnt get the repo working -_-)
-ENV TEMP_DEB="$(mktemp)"
-RUN curl 'https://packages.ubiquityrobotics.com/ubuntu/ubiquity/pool/main/r/ros-kinetic-raspicam-node/ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb' --output "$TEMP_DEB"
-RUN apt-get install "$TEMP_DEB" && rm -f "$TEMP_DEB"
+RUN curl 'https://packages.ubiquityrobotics.com/ubuntu/ubiquity/pool/main/r/ros-kinetic-raspicam-node/ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb' --output "ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb"
+RUN apt-get install ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb
 
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
