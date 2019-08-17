@@ -24,7 +24,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9
     ros-kinetic-ackermann-msgs \
     python-pip \
     python-smbus \
-    apt-get update
+    && apt-get update
 
 # add the raspberry pi camera node from ubiquity robotics
 RUN add-apt-repository "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi" && \
