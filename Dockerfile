@@ -13,29 +13,29 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 ENV ROS_DISTRO kinetic
 
+RUN apt-get install -y software-properties-common
+
 # install ros bits and pieces
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116 && \
-    echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list && \
-    apt-get update && apt-get install -y \
-    software-properties-common \
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116
+RUN add-apt-repository "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main"
+
+RUN curl -so - http://archive.raspberrypi.org/debian/raspberrypi.gpg.key | apt-key add -
+RUN add-apt-repository "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi"
+RUN add-apt-repository "deb http://archive.raspberrypi.org/debian/ stretch main ui"
+
+RUN apt-get update && apt-get install -y \
     ros-kinetic-perception \
     ros-kinetic-tf-conversions \
     ros-kinetic-joy \
     ros-kinetic-ackermann-msgs \
     python-pip \
     python-smbus \
-    && apt-get update
+    libraspberrypi0
 
 # add the raspberry pi camera node from ubiquity robotics
-RUN add-apt-repository "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi" && \
-    add-apt-repository "deb http://archive.raspberrypi.org/debian/ stretch main ui" && \
-    curl -so - http://archive.raspberrypi.org/debian/raspberrypi.gpg.key | apt-key add - && \
-    apt-get update && \
-    apt-get install -y libraspberrypi0
-
 RUN curl 'https://packages.ubiquityrobotics.com/ubuntu/ubiquity/pool/main/r/ros-kinetic-raspicam-node/ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb' --output "ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb"
-RUN apt install -y ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb
-RUN apt-get -f -y install
+RUN apt-get install -y ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && rm -f ./ros-kinetic-raspicam-node_0.4.0-2xenial_armhf.deb && \
+    apt-get clean
 
 RUN mkdir /home/ros_bot/
 COPY . /home/ros_bot
