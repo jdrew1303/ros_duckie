@@ -19,7 +19,7 @@ rosrun differential differential_drive_node &
 sleep 5
 
 # now uses https://github.com/UbiquityRobotics/raspicam_node instead of custom node
-roslaunch raspicam_node camerav2_1280x960.launch height:=100 width:=160 framerate:=20 &
+roslaunch raspicam_node camerav2_1280x960.launch height:=100 width:=160 framerate:=20 enable_imv:=true private_topics:=true &
 
 
 while sleep 60; do
