@@ -1,5 +1,10 @@
 FROM arm32v7/ros:kinetic-ros-base-xenial
 
+# tag our build with git information
+LABEL git_commit=$GIT_COMMIT
+LABEL git_commit_author=$GIT_COMMIT_AUTHOR
+
+# 
 ENV INITSYSTEM off
 ENV QEMU_EXECVE 1
 # setup environment
