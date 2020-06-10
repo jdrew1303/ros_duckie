@@ -69,7 +69,7 @@ def average_slope_intercept(image, line_segments):
 
     return lane_lines
 
-# TODO might be good to keerp track of the previous values and do 
+# TODO might be good to keep track of the previous values and do 
 # some lane averaging (this would allow us to keep driving in patchy 
 # parts with more acuracy) This is meant for an Ackerman driving model 
 # but seems to work fine for our needs.
