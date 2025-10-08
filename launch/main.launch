@@ -1,0 +1,15 @@
+<launch>
+    <!-- Load parameters from a YAML file -->
+    <rosparam file="$(find cv_lane_follower)/config/config.yaml" command="load" />
+
+    <!-- Start the camera node -->
+    <node name="camera" pkg="camera" type="camera_node" output="screen" />
+
+    <!-- Start the lane follower node -->
+    <node name="cv_lane_follower" pkg="cv_lane_follower" type="lane_follower_node" output="screen" />
+
+    <!-- Start the differential drive node -->
+    <node name="drivetrain" pkg="differential" type="differential_drive_node" output="screen">
+        <remap from="~ackermann" to="/drivetrain/ackermann" />
+    </node>
+</launch>

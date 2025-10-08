@@ -1,0 +1,27 @@
+# Camera node parameters
+camera:
+    device: 0
+    framerate: 20.0
+    width: 160
+    height: 100
+
+# Lane follower node parameters
+lane_follower:
+    save_images: false
+    usb_mount: "/opt/usb/"
+    lower_yellow: [25, 50, 50]
+    upper_yellow: [45, 255, 255]
+    lower_white: [0, 0, 150]
+    upper_white: [180, 100, 255]
+    canny_sigma: 0.33
+    hough_rho: 1
+    hough_angle: 0.017453292519943295 # np.pi / 180
+    hough_threshold: 15
+    hough_min_line_length: 3
+    hough_max_line_gap: 4
+
+# Drivetrain node parameters
+drivetrain:
+    motor_addr: 0x60
+    pulse_min: 60
+    pulse_max: 255
