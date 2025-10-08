@@ -1,40 +1,56 @@
 #!/usr/bin/env python
-import rospy
 import cv2
-import os
-
+import rospy
 from sensor_msgs.msg import CompressedImage
 
-# we need to add this to have raspberry pi expose the camera as a usb camera
-os.system('sudo modprobe bcm2835-v4l2') 
+class CameraNode:
+    def __init__(self):
+        rospy.init_node('camera', anonymous=False)
 
-CAMERA = cv2.VideoCapture(0)
-CAMERA.set(cv2.CAP_PROP_FRAME_WIDTH, 160)
-CAMERA.set(cv2.CAP_PROP_FRAME_HEIGHT, 100)
+        # Get parameters from the ROS parameter server
+        self.device = rospy.get_param('~device', 0)
+        self.framerate = rospy.get_param('~framerate', 20.0)
+        self.width = rospy.get_param('~width', 160)
+        self.height = rospy.get_param('~height', 100)
 
-def publish_image_to_topic(timer_event):
-        CAMERA_NODE_PUBLISHER = rospy.Publisher("~image", CompressedImage, queue_size=1)
-        # fetch the current image from the camera
-        (grabbed, frame) = CAMERA.read()
+        # Initialize the camera
+        self.camera = cv2.VideoCapture(self.device)
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
 
-        # build message
+        # Create a publisher
+        self.publisher = rospy.Publisher("~image", CompressedImage, queue_size=1)
+
+        # Set up a timer for capturing and publishing images
+        rospy.Timer(rospy.Duration.from_sec(1.0/self.framerate), self.publish_image)
+
+        # Set up a shutdown hook
+        rospy.on_shutdown(self.cleanup)
+
+    def publish_image(self, timer_event):
+        # Fetch the current image from the camera
+        (grabbed, frame) = self.camera.read()
+
+        if not grabbed:
+            rospy.logwarn("Failed to grab frame from camera")
+            return
+
+        # Build message
         message = CompressedImage()
         message.data = cv2.imencode('.jpg', frame)[1].tostring()
         message.format = "jpeg"
         message.header.stamp = rospy.Time.now()
-            
-        # publish new image to the topic
-        CAMERA_NODE_PUBLISHER.publish(message)
 
-def cleanup_on_shutdown():
-    CAMERA.release()
-    cv2.destroyAllWindows()
+        # Publish new image to the topic
+        self.publisher.publish(message)
+
+    def cleanup(self):
+        self.camera.release()
+        cv2.destroyAllWindows()
+
+    def run(self):
+        rospy.spin()
 
 if __name__ == '__main__':
-    # this is the business end of the node
-    rospy.init_node('camera', anonymous=False)
-    rospy.on_shutdown(cleanup_on_shutdown)
-    CAMERA_FRAMERATE = 20.0
-    FPS_TO_CAPTURE = rospy.Duration.from_sec(1.0/CAMERA_FRAMERATE)
-    MAIN_CAMERA_LOOP = rospy.Timer(FPS_TO_CAPTURE, publish_image_to_topic)
-    rospy.spin()
+    node = CameraNode()
+    node.run()
